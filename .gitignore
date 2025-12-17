@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+.conda
+env/
+venv/
+.venv/
+# Distribution / packaging
+.Python
+build/
+dist/
+*.egg-info/
+# IDEs
+.vscode/
+.idea/
+.trae/
+# Data and Models (generated)
+data/output/*
+*.pth
+*.pt
+*.h5
+# Logs
+*.log
+# OS generated files
+.DS_Store

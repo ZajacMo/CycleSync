@@ -28,7 +28,7 @@ R_FENCE = 200      # 覆盖半径 (m)
 ALPHA = 1.0        # 覆盖率阈值 (100% full coverage)
 EPS_METERS = 50    # DBSCAN 半径 (m)
 MIN_SAMPLES = 5      # DBSCAN 最小样本 (Lowered to capture more demand)
-TOP_M_CANDIDATES = 500 # 候选点数量 (Use all clusters to ensure full coverage)
+TOP_M_CANDIDATES = 500
 LOG_FILE = os.path.join(OUTPUT_DIR, "q3.log")
 
 os.makedirs(OUTPUT_DIR, exist_ok=True)
@@ -80,7 +80,7 @@ total_weight = clusters['weight'].sum()
 log_and_print(f"Total covered weight by clusters: {total_weight} ({total_weight/len(points):.2%} of total points)")
 
 # 选取 Top M 候选点
-if len(clusters) > TOP_M_CANDIDATES:
+if TOP_M_CANDIDATES is not None and len(clusters) > TOP_M_CANDIDATES:
     candidates = clusters.sort_values(by='weight', ascending=False).head(TOP_M_CANDIDATES).copy()
 else:
     candidates = clusters.copy()

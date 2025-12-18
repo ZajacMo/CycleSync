@@ -24,10 +24,10 @@ plt.rcParams['axes.unicode_minus'] = False
 CLEANED_DATA_PATH = "data/output/cleaned_data.csv"
 OUTPUT_DIR = "data/output"
 R_EARTH = 6371000  # 地球半径 (m)
-EPS_METERS = 250   # 聚类半径 (m) - Larger radius to capture more points initially
-MIN_SAMPLES = 30   # 最小样本数
-SPLIT_THRESHOLD = 2000 # 如果一个 Cluster 超过这么多点，就拆分
-TARGET_SIZE = 500      # 拆分后每个子 Cluster 的期望大小
+EPS_METERS = 150   # 聚类半径 (m) - Larger radius to capture more points initially
+MIN_SAMPLES = 10   # 最小样本数
+SPLIT_THRESHOLD = 5000 # 如果一个 Cluster 超过这么多点，就拆分
+TARGET_SIZE = 1500      # 拆分后每个子 Cluster 的期望大小
 
 print("Loading cleaned data...")
 df = pd.read_csv(CLEANED_DATA_PATH)

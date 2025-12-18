@@ -4,6 +4,7 @@ from sklearn.cluster import DBSCAN
 from math import radians, sin, cos, sqrt, atan2
 import os
 import matplotlib.pyplot as plt
+import logging
 
 import matplotlib.font_manager as fm
 
@@ -24,13 +25,27 @@ CLEANED_DATA_PATH = "data/output/cleaned_data.csv"
 OUTPUT_DIR = "data/output"
 R_EARTH = 6371000  # m
 R_FENCE = 200      # 覆盖半径 (m)
-ALPHA = 0.95       # 覆盖率阈值
+ALPHA = 1.0        # 覆盖率阈值 (100% full coverage)
 EPS_METERS = 50    # DBSCAN 半径 (m)
-MIN_SAMPLES = 20   # DBSCAN 最小样本
-TOP_M_CANDIDATES = 300 # 候选点数量
+MIN_SAMPLES = 5      # DBSCAN 最小样本 (Lowered to capture more demand)
+TOP_M_CANDIDATES = 500 # 候选点数量 (Use all clusters to ensure full coverage)
+LOG_FILE = os.path.join(OUTPUT_DIR, "q3.log")
+
+os.makedirs(OUTPUT_DIR, exist_ok=True)
+logging.basicConfig(
+    filename=LOG_FILE,
+    level=logging.INFO,
+    format='%(asctime)s - %(message)s',
+    filemode='w'
+)
+logger = logging.getLogger()
+
+def log_and_print(msg):
+    print(msg)
+    logger.info(msg)
 
 # 1. 构造停放点集
-print("Loading data for fence optimization...")
+log_and_print("Loading data for fence optimization...")
 df = pd.read_csv(CLEANED_DATA_PATH)
 # 停放点 = 起点 + 终点
 points = pd.concat([
@@ -38,10 +53,10 @@ points = pd.concat([
     df[['end_location_x', 'end_location_y']].rename(columns={'end_location_x': 'x', 'end_location_y': 'y'})
 ], ignore_index=True)
 
-print(f"Total parking events: {len(points)}")
+log_and_print(f"Total parking events: {len(points)}")
 
 # 2. 精细聚类 (候选点)
-print("Running DBSCAN for candidates...")
+log_and_print("Running DBSCAN for candidates...")
 coords = np.radians(points[['y', 'x']].values)
 eps_rad = EPS_METERS / R_EARTH
 db = DBSCAN(eps=eps_rad, min_samples=MIN_SAMPLES, metric='haversine', algorithm='ball_tree', n_jobs=-1)
@@ -49,7 +64,7 @@ db.fit(coords)
 
 points['cluster'] = db.labels_
 n_clusters = len(set(db.labels_)) - (1 if -1 in db.labels_ else 0)
-print(f"Found {n_clusters} clusters (candidate sites).")
+log_and_print(f"Found {n_clusters} clusters (candidate sites).")
 
 # 3. 计算需求权重
 # 每个簇是一个需求点，权重 = 簇内点数
@@ -62,7 +77,7 @@ clusters = points[points['cluster'] != -1].groupby('cluster').agg({
 
 clusters.columns = ['cluster_id', 'x', 'y', 'weight']
 total_weight = clusters['weight'].sum()
-print(f"Total covered weight by clusters: {total_weight} ({total_weight/len(points):.2%} of total points)")
+log_and_print(f"Total covered weight by clusters: {total_weight} ({total_weight/len(points):.2%} of total points)")
 
 # 选取 Top M 候选点
 if len(clusters) > TOP_M_CANDIDATES:
@@ -127,7 +142,8 @@ covered_mask = np.zeros(n_demand, dtype=bool)
 current_covered_weight = 0
 target_weight = ALPHA * demand_points['weight'].sum()
 
-print(f"Target covered weight: {target_weight}")
+log_and_print(f"Optimization problem size: {n_demand} demand points, {n_candidate} candidates")
+log_and_print(f"Target covered weight: {target_weight}")
 
 while current_covered_weight < target_weight:
     # 计算每个候选点的边际贡献 (能新覆盖多少权重)
@@ -171,7 +187,7 @@ while current_covered_weight < target_weight:
     
     # print(f"Selected {len(selected_indices)}: Added {best_gain}, Total {current_covered_weight}/{target_weight}")
 
-print(f"Greedy selection finished. Selected {len(selected_indices)} fences.")
+log_and_print(f"Greedy selection finished. Selected {len(selected_indices)} fences.")
 
 # 剪枝 (Pruning)
 # 尝试移除冗余点
@@ -198,7 +214,7 @@ for idx in list(final_selected): # copy list to iterate
         final_selected.remove(idx)
         # print(f"Pruned candidate {idx}")
 
-print(f"After pruning: {len(final_selected)} fences.")
+log_and_print(f"After pruning: {len(final_selected)} fences.")
 
 # 5. 输出结果
 selected_fences = candidate_points.iloc[final_selected].copy()
@@ -210,12 +226,12 @@ uncovered_points = demand_points[uncovered_mask].copy()
 
 # 保存
 selected_fences.to_csv(os.path.join(OUTPUT_DIR, "q3_fences.csv"), index=False)
-print("Saved fences.")
+log_and_print("Saved fences.")
 
 # 计算最终覆盖率
 final_cov_weight = demand_points['weight'].values[~uncovered_mask].sum()
 final_ratio = final_cov_weight / demand_points['weight'].sum()
-print(f"Final Coverage Ratio: {final_ratio:.4f}")
+log_and_print(f"Final Coverage Ratio: {final_ratio:.4f}")
 
 # 可视化
 plt.figure(figsize=(10, 8))
@@ -234,4 +250,4 @@ plt.scatter(selected_fences['x'], selected_fences['y'], c='blue', marker='x', s=
 plt.title(f'Electronic Fence Layout (Coverage: {final_ratio:.1%})')
 plt.legend()
 plt.savefig(os.path.join(OUTPUT_DIR, "q3_fence_layout.png"))
-print("Saved layout plot.")
+log_and_print("Saved layout plot.")

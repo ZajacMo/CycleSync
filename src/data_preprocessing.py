@@ -1,30 +1,47 @@
+
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 from datetime import datetime
 import os
+import logging
 
 # 配置
-DATA_PATH = "题C-附件-mobike_shanghai_dataset.csv"
+DATA_PATH = "data/题C-附件-mobike_shanghai_dataset.csv"
 OUTPUT_DIR = "data/output"
+LOG_FILE = os.path.join(OUTPUT_DIR, "clean.log")
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
+# 设置日志
+logging.basicConfig(
+    filename=LOG_FILE,
+    level=logging.INFO,
+    format='%(asctime)s - %(message)s',
+    filemode='w' # Overwrite each time
+)
+logger = logging.getLogger()
+
+def log_and_print(msg):
+    print(msg)
+    logger.info(msg)
+
+log_and_print("Starting data preprocessing...")
+
 # 1. 读取数据
-print("Loading data...")
+log_and_print("Loading data...")
 try:
     df = pd.read_csv(DATA_PATH)
 except Exception as e:
-    print(f"Error reading CSV: {e}")
-    # 尝试更鲁棒的读取方式，或者用户提供的路径可能有误
-    # 这里假设路径正确，如果失败可能需要用户确认
+    log_and_print(f"Error reading CSV: {e}")
     exit(1)
 
-print(f"Original shape: {df.shape}")
+initial_count = len(df)
+log_and_print(f"Original record count: {initial_count}")
 
 # 2. 清洗
 # 解析时间
-print("Parsing datetime...")
+log_and_print("Parsing datetime...")
 df['start_time'] = pd.to_datetime(df['start_time'])
 df['end_time'] = pd.to_datetime(df['end_time'])
 
@@ -32,9 +49,10 @@ df['end_time'] = pd.to_datetime(df['end_time'])
 df['duration_min'] = (df['end_time'] - df['start_time']).dt.total_seconds() / 60.0
 
 # 过滤时长 [1, 180] min
-original_len = len(df)
+before_duration_filter = len(df)
 df = df[(df['duration_min'] >= 1) & (df['duration_min'] <= 180)]
-print(f"Filtered by duration: {len(df)} (dropped {original_len - len(df)})")
+duration_dropped = before_duration_filter - len(df)
+log_and_print(f"Filtered by duration (1-180 min): Dropped {duration_dropped} records. Remaining: {len(df)}")
 
 # 计算 Haversine 距离 (km)
 def haversine_np(lon1, lat1, lon2, lat2):
@@ -58,9 +76,11 @@ df['speed_kmh'] = df['dist_km'] / (df['duration_min'] / 60.0)
 # 过滤速度 <= 25 km/h
 before_speed_filter = len(df)
 df = df[df['speed_kmh'] <= 25]
-print(f"Filtered by speed: {len(df)} (dropped {before_speed_filter - len(df)})")
+speed_dropped = before_speed_filter - len(df)
+log_and_print(f"Filtered by speed (<= 25 km/h): Dropped {speed_dropped} records. Remaining: {len(df)}")
 
 # 坐标分位数过滤 [0.5%, 99.5%]
+before_coord_filter = len(df)
 coords = ['start_location_x', 'start_location_y', 'end_location_x', 'end_location_y']
 bounds = {}
 for col in coords:
@@ -69,16 +89,26 @@ for col in coords:
     bounds[col] = (lower, upper)
     df = df[(df[col] >= lower) & (df[col] <= upper)]
 
-print(f"Filtered by coordinates: {len(df)}")
+coord_dropped = before_coord_filter - len(df)
+log_and_print(f"Filtered by coordinates (0.5%-99.5% quantile): Dropped {coord_dropped} records. Remaining: {len(df)}")
 
 # 去重
+before_dedup = len(df)
 df = df.sort_values(by='duration_min', ascending=False).drop_duplicates(subset='orderid', keep='first')
-print(f"Final shape after deduplication: {df.shape}")
+dedup_dropped = before_dedup - len(df)
+log_and_print(f"Deduplication (by orderid): Dropped {dedup_dropped} records. Remaining: {len(df)}")
+
+final_count = len(df)
+total_dropped = initial_count - final_count
+log_and_print(f"\nSummary:")
+log_and_print(f"  Initial records: {initial_count}")
+log_and_print(f"  Final records:   {final_count}")
+log_and_print(f"  Total dropped:   {total_dropped} ({total_dropped/initial_count*100:.2f}%)")
 
 # 保存清洗后数据
 cleaned_path = os.path.join(OUTPUT_DIR, "cleaned_data.csv")
 df.to_csv(cleaned_path, index=False)
-print(f"Saved cleaned data to {cleaned_path}")
+log_and_print(f"Saved cleaned data to {cleaned_path}")
 
 # 3. 统计分析 (Q1部分)
 # 全局小时分布
@@ -96,38 +126,20 @@ weekday_dates = [d for d in unique_dates if d.weekday() < 5]
 n_weekends = len(weekend_dates)
 n_weekdays = len(weekday_dates)
 
-print(f"Days: {len(unique_dates)}, Weekdays: {n_weekdays}, Weekends: {n_weekends}")
+log_and_print(f"Date range stats: Days={len(unique_dates)}, Weekdays={n_weekdays}, Weekends={n_weekends}")
 
-def normalize_count(row):
-    if row['is_weekend']:
-        return row['count'] / n_weekends if n_weekends > 0 else 0
-    else:
-        return row['count'] / n_weekdays if n_weekdays > 0 else 0
-
-hourly_counts['avg_count'] = hourly_counts.apply(normalize_count, axis=1)
+hourly_counts['avg_count'] = 0.0
+hourly_counts.loc[hourly_counts['is_weekend'], 'avg_count'] = hourly_counts.loc[hourly_counts['is_weekend'], 'count'] / n_weekends
+hourly_counts.loc[~hourly_counts['is_weekend'], 'avg_count'] = hourly_counts.loc[~hourly_counts['is_weekend'], 'count'] / n_weekdays
 
 # 绘图
-import matplotlib.font_manager as fm
-
-# 尝试加载系统中的中文字体
-font_candidates = [
-    '/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc',
-    '/usr/share/fonts/opentype/noto/NotoSansCJK-Bold.ttc'
-]
-for fpath in font_candidates:
-    if os.path.exists(fpath):
-        fm.fontManager.addfont(fpath)
-
-plt.rcParams['font.sans-serif'] = ['SimHei', 'Noto Sans CJK SC', 'Noto Sans CJK JP', 'WenQuanYi Micro Hei', 'sans-serif']
-plt.rcParams['axes.unicode_minus'] = False
 plt.figure(figsize=(10, 6))
-sns.lineplot(data=hourly_counts, x='hour', y='avg_count', hue='is_weekend', marker='o')
-plt.title('小时平均使用频率 (工作日 vs 周末)')
-plt.xlabel('时刻')
-plt.ylabel('平均使用次数')
+sns.lineplot(data=hourly_counts, x='hour', y='avg_count', hue='is_weekend', style='is_weekend', markers=True, dashes=False)
+plt.title('Average Hourly Bike Usage: Weekday vs Weekend')
+plt.xlabel('Hour of Day')
+plt.ylabel('Average Number of Orders')
 plt.xticks(range(0, 24))
 plt.grid(True)
-plt.legend(title='是否周末')
+plt.legend(title='Is Weekend', labels=['Weekday', 'Weekend'])
 plt.savefig(os.path.join(OUTPUT_DIR, "q1_hourly_usage.png"))
-print("Saved q1_hourly_usage.png")
-
+log_and_print(f"Saved q1_hourly_usage.png")

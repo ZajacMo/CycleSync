@@ -6,6 +6,7 @@ from torch.utils.data import Dataset, DataLoader
 from sklearn.preprocessing import StandardScaler
 import os
 import matplotlib.pyplot as plt
+import logging
 
 import matplotlib.font_manager as fm
 
@@ -27,6 +28,20 @@ TOP_50_PATH = "data/output/top_50_stations.csv"
 OUTPUT_DIR = "data/output"
 PRED_WINDOW_START = pd.Timestamp("2016-09-01 07:00:00")
 PRED_WINDOW_END = pd.Timestamp("2016-09-01 09:00:00")
+LOG_FILE = os.path.join(OUTPUT_DIR, "q1.log")
+
+os.makedirs(OUTPUT_DIR, exist_ok=True)
+logging.basicConfig(
+    filename=LOG_FILE,
+    level=logging.INFO,
+    format='%(asctime)s - %(message)s',
+    filemode='w'
+)
+logger = logging.getLogger()
+
+def log_and_print(msg):
+    print(msg)
+    logger.info(msg)
 
 # 模型参数
 SEQ_LEN = 48  # 过去48小时
@@ -38,10 +53,10 @@ EPOCHS = 50
 LR = 1e-3
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-print(f"Using device: {DEVICE}")
+log_and_print(f"Using device: {DEVICE}")
 
 # 1. 数据准备
-print("Preparing data...")
+log_and_print("Preparing data...")
 df = pd.read_csv(CLUSTERED_DATA_PATH)
 df['start_time'] = pd.to_datetime(df['start_time'])
 df['end_time'] = pd.to_datetime(df['end_time'])
@@ -60,7 +75,7 @@ time_idx = pd.date_range(start="2016-08-01 00:00:00", end="2016-09-01 08:00:00",
 n_timesteps = len(time_idx)
 n_stations = len(top_50)
 
-print(f"Time steps: {n_timesteps}, Stations: {n_stations}")
+log_and_print(f"Time steps: {n_timesteps}, Stations: {n_stations}")
 
 # 初始化流量矩阵: [Time, Station, 2] (0: Out, 1: In)
 flow_matrix = np.zeros((n_timesteps, n_stations, 2))
@@ -207,7 +222,7 @@ criterion = nn.MSELoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=LR)
 
 # 5. 训练
-print("Starting training...")
+log_and_print("Starting training...")
 best_val_loss = float('inf')
 patience = 5
 counter = 0
@@ -244,7 +259,7 @@ for epoch in range(EPOCHS):
     avg_val_loss = total_val_loss / len(val_loader)
     val_losses.append(avg_val_loss)
     
-    print(f"Epoch {epoch+1}/{EPOCHS}, Train Loss: {avg_train_loss:.4f}, Val Loss: {avg_val_loss:.4f}")
+    log_and_print(f"Epoch {epoch+1}/{EPOCHS}, Train Loss: {avg_train_loss:.4f}, Val Loss: {avg_val_loss:.4f}")
     
     if avg_val_loss < best_val_loss:
         best_val_loss = avg_val_loss
@@ -253,11 +268,11 @@ for epoch in range(EPOCHS):
     else:
         counter += 1
         if counter >= patience:
-            print("Early stopping")
+            log_and_print("Early stopping")
             break
 
 # 6. 预测 2016-09-01 07:00 - 09:00
-print("Predicting for 2016-09-01...")
+log_and_print("Predicting for 2016-09-01...")
 model.load_state_dict(torch.load(os.path.join(OUTPUT_DIR, "best_model.pth")))
 model.eval()
 
@@ -267,7 +282,7 @@ model.eval()
 
 last_data_time_str = "2016-08-31 23:00:00"
 curr_idx = time_idx.get_loc(pd.Timestamp(last_data_time_str))
-print(f"Starting rolling prediction from: {last_data_time_str}")
+log_and_print(f"Starting rolling prediction from: {last_data_time_str}")
 
 # 准备初始输入 [08-30 00:00 ... 08-31 23:00] (48 hours)
 start_input_idx = curr_idx - SEQ_LEN + 1
@@ -328,7 +343,7 @@ for i, sid in enumerate(top_50):
 
 pred_df = pd.DataFrame(results)
 pred_df.to_csv(os.path.join(OUTPUT_DIR, "q1_predictions.csv"), index=False)
-print("Saved predictions to q1_predictions.csv")
+log_and_print("Saved predictions to q1_predictions.csv")
 
 # 训练曲线
 plt.figure()

@@ -29,6 +29,9 @@ if __name__ == "__main__":
     
     # 3. 需求预测
     run_step("Demand Prediction (ST-LSTM)", "src/demand_prediction.py")
+
+    # 3.1 聚类结果可视化 (新增)
+    run_step("Cluster Visualization", "src/visualize_clusters.py")
     
     # 4. 调度优化
     run_step("Optimization (VRP-PD-TW)", "src/optimization.py")

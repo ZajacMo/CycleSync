@@ -1,4 +1,7 @@
-# 共享单车骑行分析与布局优化 (Math Modeling)
+# CycleSync: Spatio-Temporal Optimization for Urban Shared Mobility
+
+共享单车骑行分析与布局优化 (Math Modeling)
+---
 
 本项目针对共享单车运营中的供需失衡、停车混乱等问题，建立了数据清洗、需求预测、调度优化和电子围栏布局的一整套数学模型解决方案。
 

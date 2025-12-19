@@ -146,13 +146,13 @@ print("Saved clustered data.")
 # 可视化：站点分布
 plt.figure(figsize=(10, 8))
 # 绘制所有站点
-plt.scatter(cluster_centers['center_x'], cluster_centers['center_y'], s=10, c='blue', alpha=0.5, label='Stations')
+plt.scatter(cluster_centers['center_x'], cluster_centers['center_y'], s=10, c='blue', alpha=0.5, label='站点')
 # 绘制 Top 50
 top_50_centers = cluster_centers[cluster_centers['cluster_id'].isin(top_50_stations)]
-plt.scatter(top_50_centers['center_x'], top_50_centers['center_y'], s=50, c='red', marker='*', label='Top 50')
-plt.title('Station Distribution and Top 50 Stations')
-plt.xlabel('Longitude')
-plt.ylabel('Latitude')
+plt.scatter(top_50_centers['center_x'], top_50_centers['center_y'], s=50, c='red', marker='*', label='Top50站点')
+plt.title('站点分布与Top50站点')
+plt.xlabel('经度')
+plt.ylabel('纬度')
 plt.legend()
 plt.savefig(os.path.join(OUTPUT_DIR, "station_distribution.png"))
 print("Saved station_distribution.png")

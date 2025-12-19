@@ -581,9 +581,9 @@ log_and_print("Saved schedule.")
 # 可视化路径
 plt.figure(figsize=(12, 10))
 # 画站点
-plt.scatter(data['center_x'], data['center_y'], c='blue', s=30, label='Stations')
+plt.scatter(data['center_x'], data['center_y'], c='blue', s=30, label='站点')
 # 画 Depot
-plt.scatter(depot_x, depot_y, c='black', marker='s', s=100, label='Depot')
+plt.scatter(depot_x, depot_y, c='black', marker='s', s=100, label='车场')
 
 # 画路径
 colors = plt.cm.get_cmap('tab20', len(best_global_assignment))
@@ -600,7 +600,7 @@ for i, route in enumerate(best_global_assignment):
             route_y.append(node['y'])
     plt.plot(route_x, route_y, c=colors(i), alpha=0.7, linewidth=2)
 
-plt.title('Vehicle Routing Schedule')
+plt.title('车辆调度路径')
 plt.legend()
 plt.savefig(os.path.join(OUTPUT_DIR, "q2_routing.png"))
 log_and_print("Saved routing plot.")

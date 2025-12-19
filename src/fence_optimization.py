@@ -236,18 +236,18 @@ log_and_print(f"Final Coverage Ratio: {final_ratio:.4f}")
 # 可视化
 plt.figure(figsize=(10, 8))
 # 绘制所有需求点 (灰色)
-plt.scatter(demand_points['x'], demand_points['y'], c='lightgray', s=10, alpha=0.5, label='Demand Points')
+plt.scatter(demand_points['x'], demand_points['y'], c='lightgray', s=10, alpha=0.5, label='需求点')
 # 绘制未覆盖点 (红色)
-plt.scatter(uncovered_points['x'], uncovered_points['y'], c='red', s=10, alpha=0.8, label='Uncovered')
+plt.scatter(uncovered_points['x'], uncovered_points['y'], c='red', s=10, alpha=0.8, label='未覆盖')
 # 绘制围栏 (蓝色圈)
-plt.scatter(selected_fences['x'], selected_fences['y'], c='blue', marker='x', s=50, label='Electronic Fences')
+plt.scatter(selected_fences['x'], selected_fences['y'], c='blue', marker='x', s=50, label='电子围栏')
 
 # 画围栏范围 (圆) - 稍微画几个示意的，画太多会乱
 # for _, row in selected_fences.iterrows():
 #     circle = plt.Circle((row['x'], row['y']), R_FENCE/100000, color='blue', fill=False, alpha=0.3) # 粗略比例
 #     plt.gca().add_patch(circle)
 
-plt.title(f'Electronic Fence Layout (Coverage: {final_ratio:.1%})')
+plt.title(f'电子围栏布局（覆盖率：{final_ratio:.1%}）')
 plt.legend()
 plt.savefig(os.path.join(OUTPUT_DIR, "q3_fence_layout.png"))
 log_and_print("Saved layout plot.")

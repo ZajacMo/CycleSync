@@ -133,13 +133,22 @@ hourly_counts.loc[hourly_counts['is_weekend'], 'avg_count'] = hourly_counts.loc[
 hourly_counts.loc[~hourly_counts['is_weekend'], 'avg_count'] = hourly_counts.loc[~hourly_counts['is_weekend'], 'count'] / n_weekdays
 
 # 绘图
+plt.rcParams['font.sans-serif'] = ['SimHei', 'Noto Sans CJK SC', 'Noto Sans CJK JP', 'WenQuanYi Micro Hei', 'sans-serif']
+plt.rcParams['axes.unicode_minus'] = False
+
+# 将布尔值映射为中文标签，确保图例正确
+hourly_counts['day_type'] = hourly_counts['is_weekend'].map({True: '周末', False: '工作日'})
+
 plt.figure(figsize=(10, 6))
-sns.lineplot(data=hourly_counts, x='hour', y='avg_count', hue='is_weekend', style='is_weekend', markers=True, dashes=False)
-plt.title('Average Hourly Bike Usage: Weekday vs Weekend')
-plt.xlabel('Hour of Day')
-plt.ylabel('Average Number of Orders')
+# 指定 hue_order 确保颜色稳定（工作日一般在前）
+sns.lineplot(data=hourly_counts, x='hour', y='avg_count', hue='day_type', style='day_type', 
+             hue_order=['工作日', '周末'], style_order=['工作日', '周末'], 
+             markers=True, dashes=False)
+plt.title('上海共享单车每小时订单数分布')
+plt.xlabel('时间')
+plt.ylabel('平均每小时订单数')
 plt.xticks(range(0, 24))
 plt.grid(True)
-plt.legend(title='Is Weekend', labels=['Weekday', 'Weekend'])
+plt.legend(title=None) # 移除图例标题，保留自动生成的正确图例
 plt.savefig(os.path.join(OUTPUT_DIR, "q1_hourly_usage.png"))
 log_and_print(f"Saved q1_hourly_usage.png")

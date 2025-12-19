@@ -39,6 +39,7 @@ def visualize_clusters(
     start_pts = df[['start_location_x', 'start_location_y', 'start_cluster']].copy()
     start_pts.columns = ['x', 'y', 'cluster']
 
+
     # End points
     end_pts = df[['end_location_x', 'end_location_y', 'end_cluster']].copy()
     end_pts.columns = ['x', 'y', 'cluster']
@@ -66,6 +67,8 @@ def visualize_clusters(
     other_clusters = cluster_info[~cluster_info['is_top50']]
 
     # --- 1. Static Plot with Matplotlib ---
+    plt.rcParams['font.sans-serif'] = ['SimHei', 'Noto Sans CJK SC', 'Noto Sans CJK JP', 'WenQuanYi Micro Hei', 'sans-serif']
+    plt.rcParams['axes.unicode_minus'] = False
     print("Generating static map...")
     plt.figure(figsize=(12, 10))
 
@@ -73,7 +76,7 @@ def visualize_clusters(
     noise_pts = all_pts[all_pts['cluster'] == -1]
     if len(noise_pts) > 10000:
         noise_pts = noise_pts.sample(10000, random_state=42)
-    plt.scatter(noise_pts['x'], noise_pts['y'], c='lightgray', s=1, alpha=0.3, label='Noise')
+    plt.scatter(noise_pts['x'], noise_pts['y'], c='lightgray', s=1, alpha=0.3, label='噪声点')
 
     # Plot Other Stations (Blue)
     # Size proportional to log volume, but smaller
@@ -84,7 +87,7 @@ def visualize_clusters(
                     s=sizes_other, 
                     alpha=0.6, 
                     edgecolors='none', 
-                    label='Other Stations')
+                    label='其他站点')
 
     # Plot Top 50 Stations (Red)
     if not top50_clusters.empty:
@@ -96,11 +99,11 @@ def visualize_clusters(
                     alpha=0.8, 
                     edgecolors='black', 
                     linewidth=0.5,
-                    label='Top 50 Stations')
+                    label='Top50站点')
 
-    plt.title('Bike Stations Distribution: Top 50 vs Others')
-    plt.xlabel('Longitude')
-    plt.ylabel('Latitude')
+    plt.title('共享单车站点分布：Top50与其他')
+    plt.xlabel('经度')
+    plt.ylabel('纬度')
     plt.legend(markerscale=1.5) # Scale up legend markers
     plt.grid(True, linestyle='--', alpha=0.3)
 
@@ -121,7 +124,7 @@ def visualize_clusters(
         cid = int(row['cluster'])
         vol = int(row['volume'])
         
-        popup_text = f"<b>Station ID:</b> {cid}<br><b>Volume:</b> {vol}<br>Type: Normal"
+        popup_text = f"<b>站点ID：</b> {cid}<br><b>流量：</b> {vol}<br>类型：普通"
         
         folium.CircleMarker(
             location=[row['y'], row['x']],
@@ -139,7 +142,7 @@ def visualize_clusters(
         cid = int(row['cluster'])
         vol = int(row['volume'])
         
-        popup_text = f"<b>Station ID:</b> {cid}<br><b>Volume:</b> {vol}<br>Type: <b>Top 50</b>"
+        popup_text = f"<b>站点ID：</b> {cid}<br><b>流量：</b> {vol}<br>类型：<b>Top50</b>"
         
         folium.CircleMarker(
             location=[row['y'], row['x']],

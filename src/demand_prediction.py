@@ -347,8 +347,8 @@ log_and_print("Saved predictions to q1_predictions.csv")
 
 # 训练曲线
 plt.figure()
-plt.plot(train_losses, label='Train Loss')
-plt.plot(val_losses, label='Val Loss')
+plt.plot(train_losses, label='训练损失')
+plt.plot(val_losses, label='验证损失')
 plt.legend()
-plt.title('Training Loss')
+plt.title('训练损失曲线')
 plt.savefig(os.path.join(OUTPUT_DIR, "q1_training_loss.png"))

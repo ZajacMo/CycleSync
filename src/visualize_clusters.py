@@ -159,5 +159,80 @@ def visualize_clusters(
     m.save(map_html_path)
     print(f"Interactive map saved to {map_html_path}")
 
+def visualize_all_clusters_map(
+    clustered_data_path="data/output/clustered_data.csv",
+    output_dir="data/output"
+):
+    # Configuration
+    map_html_path = os.path.join(output_dir, "station_clusters_all_map.html")
+
+    # Ensure output directory exists
+    os.makedirs(output_dir, exist_ok=True)
+
+    print("Loading data for all clusters map...")
+    if not os.path.exists(clustered_data_path):
+        print(f"Error: {clustered_data_path} not found.")
+        return
+        
+    df = pd.read_csv(clustered_data_path)
+
+    # Calculate centroids and counts
+    print("Calculating cluster centroids...")
+
+    # Start points
+    start_pts = df[['start_location_x', 'start_location_y', 'start_cluster']].copy()
+    start_pts.columns = ['x', 'y', 'cluster']
+
+    # End points
+    end_pts = df[['end_location_x', 'end_location_y', 'end_cluster']].copy()
+    end_pts.columns = ['x', 'y', 'cluster']
+
+    # Combine
+    all_pts = pd.concat([start_pts, end_pts], ignore_index=True)
+
+    # Remove noise (-1)
+    valid_pts = all_pts[all_pts['cluster'] != -1]
+
+    # Calculate centroids and volume
+    cluster_info = valid_pts.groupby('cluster').agg({
+        'x': 'mean',
+        'y': 'mean',
+        'cluster': 'count'
+    }).rename(columns={'cluster': 'volume'}).reset_index()
+
+    print(f"Found {len(cluster_info)} unique clusters.")
+
+    # --- Interactive Map with Folium ---
+    print("Generating interactive map (all clusters)...")
+
+    # Center map
+    center_lat = cluster_info['y'].mean()
+    center_lon = cluster_info['x'].mean()
+
+    m = folium.Map(location=[center_lat, center_lon], zoom_start=12, tiles='CartoDB positron')
+
+    # Add All Clusters (Blue circles)
+    for idx, row in cluster_info.iterrows():
+        cid = int(row['cluster'])
+        vol = int(row['volume'])
+        
+        popup_text = f"<b>站点ID：</b> {cid}<br><b>流量：</b> {vol}"
+        
+        folium.CircleMarker(
+            location=[row['y'], row['x']],
+            radius=2 + np.log1p(vol) * 0.5,
+            popup=popup_text,
+            color='cornflowerblue',
+            fill=True,
+            fill_color='cornflowerblue',
+            fill_opacity=0.6,
+            weight=1
+        ).add_to(m)
+
+    # Save
+    m.save(map_html_path)
+    print(f"Interactive map (all clusters) saved to {map_html_path}")
+
 if __name__ == "__main__":
     visualize_clusters()
+    visualize_all_clusters_map()

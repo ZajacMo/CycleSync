@@ -14,9 +14,11 @@
 ├── src/
 │   ├── data_preprocessing.py # 数据清洗与EDA
 │   ├── station_clustering.py # 站点聚类 (DBSCAN)
+│   ├── visualize_clusters.py # 聚类结果可视化
 │   ├── demand_prediction.py  # 需求预测 (ST-LSTM)
 │   ├── optimization.py       # 调度优化 (GA)
-│   └── fence_optimization.py # 电子围栏 (覆盖模型)
+│   ├── fence_optimization.py # 电子围栏 (覆盖模型)
+│   └── sensitivity_analysis_q3.py # 敏感性分析
 ├── main.py                 # 主程序入口
 ├── requirements.txt        # 依赖包
 ├── 题目.md
@@ -49,6 +51,7 @@ python3 main.py
 3. **需求预测**: `python3 src/demand_prediction.py`
 4. **调度优化**: `python3 src/optimization.py`
 5. **围栏布局**: `python3 src/fence_optimization.py`
+6. **敏感性分析**: `python3 src/sensitivity_analysis_q3.py`
 
 ## 模型与结果说明
 
@@ -68,7 +71,7 @@ python3 main.py
     * 建立 VRP-PD-TW (带时间窗和容量限制的车辆路径问题) 模型。
     * 使用遗传算法 (GA) 求解，目标是最小化运输成本和未满足需求惩罚。
 * **结果**:
-    * 输出了 8 辆车的调度路径方案 `q2_schedule.csv`。
+    * 输出了 11 辆车的调度路径方案 `q2_schedule.csv`。
     * 可视化路径图：`q2_routing.png`。
 
 ### 问题3：电子围栏布局
@@ -78,5 +81,5 @@ python3 main.py
     * 建立**最小成本全覆盖模型**，约束每个围栏覆盖半径 200m，目标覆盖率 **100%**。
     * 使用**贪心加点 (Greedy Set Cover)** 结合 **反向剪枝 (Pruning)** 策略求解，优先保证用户便利性（全覆盖），再最小化围栏数量。
 * **结果**:
-    * 选址方案 `q3_fences.csv`，共建设 **309** 个电子围栏，实现了对所有 **10,684** 个细微需求点的 100% 覆盖。
+    * 选址方案 `q3_fences.csv`，共建设 **3165** 个电子围栏，实现了对所有 **10,684** 个细微需求点的 100% 覆盖。
     * 布局可视化：`q3_fence_layout.png`。

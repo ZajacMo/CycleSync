@@ -5,6 +5,7 @@ import copy
 from math import radians, sin, cos, sqrt, atan2
 import os
 import matplotlib.pyplot as plt
+import matplotlib
 import logging
 
 import matplotlib.font_manager as fm
@@ -41,7 +42,7 @@ def log_and_print(msg):
     logger.info(msg)
 
 # 参数
-RHO = 1.1        # 需求安全系数
+RHO = 15.0       # 需求安全系数 (增加监测灵敏度，以增加调度车辆数)
 ETA = 1.3        # 车辆数安全系数
 Q_CAPACITY = 25  # 单车容量
 V_SPEED = 25     # km/h
@@ -586,7 +587,7 @@ plt.scatter(data['center_x'], data['center_y'], c='blue', s=30, label='站点')
 plt.scatter(depot_x, depot_y, c='black', marker='s', s=100, label='车场')
 
 # 画路径
-colors = plt.cm.get_cmap('tab20', len(best_global_assignment))
+cmap = matplotlib.colormaps['tab20']
 for i, route in enumerate(best_global_assignment):
     route_x = []
     route_y = []
@@ -598,7 +599,7 @@ for i, route in enumerate(best_global_assignment):
             node = loc_map[nid]
             route_x.append(node['x'])
             route_y.append(node['y'])
-    plt.plot(route_x, route_y, c=colors(i), alpha=0.7, linewidth=2)
+    plt.plot(route_x, route_y, c=cmap(i % 20), alpha=0.7, linewidth=2)
 
 plt.title('车辆调度路径')
 plt.legend()

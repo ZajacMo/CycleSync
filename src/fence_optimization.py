@@ -5,19 +5,12 @@ from math import radians, sin, cos, sqrt, atan2
 import os
 import matplotlib.pyplot as plt
 import logging
-import matplotlib.font_manager as fm
+try:
+    from src.font_config import configure_matplotlib_chinese_fonts
+except ImportError:
+    from font_config import configure_matplotlib_chinese_fonts
 
-# 尝试加载系统中的中文字体
-font_candidates = [
-    '/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc',
-    '/usr/share/fonts/opentype/noto/NotoSansCJK-Bold.ttc'
-]
-for fpath in font_candidates:
-    if os.path.exists(fpath):
-        fm.fontManager.addfont(fpath)
-
-plt.rcParams['font.sans-serif'] = ['SimHei', 'Noto Sans CJK SC', 'Noto Sans CJK JP', 'WenQuanYi Micro Hei', 'sans-serif']
-plt.rcParams['axes.unicode_minus'] = False
+configure_matplotlib_chinese_fonts()
 
 # 配置
 CLEANED_DATA_PATH = "data/output/cleaned_data.csv"

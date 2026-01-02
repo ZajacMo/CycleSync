@@ -29,7 +29,7 @@ DEFAULT_R_FENCE = 200      # 覆盖半径 (m)
 DEFAULT_ALPHA = 1.0        # 覆盖率阈值 (100% full coverage)
 DEFAULT_EPS_METERS = 50    # DBSCAN 半径 (m)
 DEFAULT_MIN_SAMPLES = 5    # DBSCAN 最小样本
-DEFAULT_TOP_M_CANDIDATES = 1000000 # 候选点数量 (Use all clusters for full coverage)
+DEFAULT_TOP_M_CANDIDATES = 500 # 候选点数量
 
 LOG_FILE = os.path.join(OUTPUT_DIR, "q3.log")
 

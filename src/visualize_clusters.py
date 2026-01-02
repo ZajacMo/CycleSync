@@ -5,6 +5,11 @@ import matplotlib.pyplot as plt
 import os
 import numpy as np
 
+try:
+    from src.font_config import configure_matplotlib_chinese_fonts
+except ImportError:
+    from font_config import configure_matplotlib_chinese_fonts
+
 def visualize_clusters(
     clustered_data_path="data/output/clustered_data.csv",
     top_50_path="data/output/top_50_stations.csv",
@@ -67,8 +72,7 @@ def visualize_clusters(
     other_clusters = cluster_info[~cluster_info['is_top50']]
 
     # --- 1. Static Plot with Matplotlib ---
-    plt.rcParams['font.sans-serif'] = ['SimHei', 'Noto Sans CJK SC', 'Noto Sans CJK JP', 'WenQuanYi Micro Hei', 'sans-serif']
-    plt.rcParams['axes.unicode_minus'] = False
+    configure_matplotlib_chinese_fonts()
     print("Generating static map...")
     plt.figure(figsize=(12, 10))
 

@@ -7,6 +7,11 @@ from datetime import datetime
 import os
 import logging
 
+try:
+    from src.font_config import configure_matplotlib_chinese_fonts
+except ImportError:
+    from font_config import configure_matplotlib_chinese_fonts
+
 # 配置
 DATA_PATH = "data/题C-附件-mobike_shanghai_dataset.csv"
 OUTPUT_DIR = "data/output"
@@ -133,8 +138,7 @@ hourly_counts.loc[hourly_counts['is_weekend'], 'avg_count'] = hourly_counts.loc[
 hourly_counts.loc[~hourly_counts['is_weekend'], 'avg_count'] = hourly_counts.loc[~hourly_counts['is_weekend'], 'count'] / n_weekdays
 
 # 绘图
-plt.rcParams['font.sans-serif'] = ['SimHei', 'Noto Sans CJK SC', 'Noto Sans CJK JP', 'WenQuanYi Micro Hei', 'sans-serif']
-plt.rcParams['axes.unicode_minus'] = False
+configure_matplotlib_chinese_fonts()
 
 # 将布尔值映射为中文标签，确保图例正确
 hourly_counts['day_type'] = hourly_counts['is_weekend'].map({True: '周末', False: '工作日'})
